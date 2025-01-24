@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"github.com/Tairascii/google-docs-user/internal/service/user"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
@@ -9,6 +10,10 @@ import (
 const (
 	accessSecret  = "yoS0baK1Ya"
 	refreshSecret = "NaRU70UzuMaK1"
+)
+
+var (
+	ErrUserNotFound = errors.New("user not found")
 )
 
 type AuthUseCase interface {
@@ -20,13 +25,16 @@ type UseCase struct {
 	users user.UserService
 }
 
-func NewAuthUseCase() AuthUseCase {
-	return &UseCase{}
+func NewAuthUseCase(users user.UserService) AuthUseCase {
+	return &UseCase{users: users}
 }
 
 func (u *UseCase) SignIn(email, password string) (Tokens, error) {
 	usr, err := u.users.GetUser(email, password)
 	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return Tokens{}, ErrUserNotFound
+		}
 		return Tokens{}, err
 	}
 

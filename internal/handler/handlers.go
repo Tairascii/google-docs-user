@@ -1,9 +1,17 @@
 package handler
 
 import (
+	"encoding/json"
+	"errors"
 	app "github.com/Tairascii/google-docs-user/internal"
+	"github.com/Tairascii/google-docs-user/internal/usecase"
+	"github.com/Tairascii/google-docs-user/pkg"
 	"github.com/go-chi/chi/v5"
 	"net/http"
+)
+
+var (
+	ErrBadCredentials = errors.New("bad credentials")
 )
 
 type Handler struct {
@@ -34,5 +42,22 @@ func handlers(h *Handler) http.Handler {
 }
 
 func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
+	var payload SignInPayload
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&payload); err != nil {
+		pkg.JSONErrorResponseWriter(w, err, http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
 
+	tokens, err := h.DI.UseCase.Auth.SignIn(payload.Email, payload.Password)
+	if err != nil {
+		if errors.Is(err, usecase.ErrUserNotFound) {
+			pkg.JSONErrorResponseWriter(w, ErrBadCredentials, http.StatusUnauthorized)
+			return
+		}
+		pkg.JSONErrorResponseWriter(w, err, http.StatusInternalServerError)
+		return
+	}
+	pkg.JSONResponseWriter(w, tokens, http.StatusOK)
 }

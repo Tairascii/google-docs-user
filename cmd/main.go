@@ -5,6 +5,8 @@ import (
 	app "github.com/Tairascii/google-docs-user/internal"
 	"github.com/Tairascii/google-docs-user/internal/db"
 	"github.com/Tairascii/google-docs-user/internal/handler"
+	"github.com/Tairascii/google-docs-user/internal/service/user"
+	"github.com/Tairascii/google-docs-user/internal/service/user/repo"
 	"github.com/Tairascii/google-docs-user/internal/usecase"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -41,7 +43,10 @@ func main() {
 		}
 	}(sqlxDb)
 
-	authUC := usecase.NewAuthUseCase()
+	userRepo := repo.New(sqlxDb)
+	userSrv := user.New(userRepo)
+
+	authUC := usecase.NewAuthUseCase(userSrv)
 
 	useCase := app.UseCase{Auth: authUC}
 	DI := &app.DI{UseCase: useCase}
