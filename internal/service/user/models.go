@@ -11,4 +11,12 @@ type User struct {
 	Email         string
 	ProfilePicUrl string
 	CreatedAt     time.Time
+	PasswordHash  string
+}
+
+type CreateUserData struct {
+	Name          string
+	Email         string
+	Password      string
+	ProfilePicUrl string
 }

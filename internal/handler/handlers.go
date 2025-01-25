@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	ErrBadCredentials = errors.New("bad credentials")
+	ErrBadCredentials    = errors.New("bad credentials")
+	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
 type Handler struct {
@@ -36,6 +37,7 @@ func handlers(h *Handler) http.Handler {
 	rg := chi.NewRouter()
 	rg.Group(func(r chi.Router) {
 		r.Post("/sign-in", h.SignIn)
+		r.Post("/sign-up", h.SignUp)
 	})
 
 	return rg
@@ -50,7 +52,8 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	tokens, err := h.DI.UseCase.Auth.SignIn(payload.Email, payload.Password)
+	ctx := r.Context()
+	tokens, err := h.DI.UseCase.Auth.SignIn(ctx, payload.Email, payload.Password)
 	if err != nil {
 		if errors.Is(err, usecase.ErrUserNotFound) {
 			pkg.JSONErrorResponseWriter(w, ErrBadCredentials, http.StatusUnauthorized)
@@ -59,5 +62,33 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		pkg.JSONErrorResponseWriter(w, err, http.StatusInternalServerError)
 		return
 	}
-	pkg.JSONResponseWriter(w, tokens, http.StatusOK)
+	pkg.JSONResponseWriter[Tokens](w, toTokens(tokens), http.StatusOK)
+}
+
+func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
+	var payload SignUpPayload
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&payload); err != nil {
+		pkg.JSONErrorResponseWriter(w, err, http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	ctx := r.Context()
+	tokens, err := h.DI.UseCase.Auth.SignUp(ctx, usecase.SignUpData{
+		Name:          payload.Name,
+		Email:         payload.Email,
+		Password:      payload.Password,
+		ProfilePicUrl: payload.ProfilePicUrl,
+	})
+	if err != nil {
+		if errors.Is(err, usecase.ErrUserAlreadyExists) {
+			pkg.JSONErrorResponseWriter(w, ErrUserAlreadyExists, http.StatusBadRequest)
+			return
+		}
+		pkg.JSONErrorResponseWriter(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	pkg.JSONResponseWriter[Tokens](w, toTokens(tokens), http.StatusOK)
 }

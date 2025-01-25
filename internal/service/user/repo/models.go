@@ -18,4 +18,5 @@ type User struct {
 	Email         string    `db:"email"`
 	ProfilePicUrl string    `db:"profile_picture_url"`
 	CreatedAt     time.Time `db:"created_at"`
+	PasswordHash  string    `db:"password_hash"`
 }

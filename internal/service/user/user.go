@@ -1,8 +1,10 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"github.com/Tairascii/google-docs-user/internal/service/user/repo"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -13,8 +15,8 @@ var (
 )
 
 type UserService interface {
-	CreateUser(name, email, password, picUrl string) error
-	GetUser(email, password string) (User, error)
+	CreateUser(ctx context.Context, data CreateUserData) (uuid.UUID, error)
+	GetUser(ctx context.Context, email string) (User, error)
 }
 
 type Service struct {
@@ -25,23 +27,23 @@ func New(rp repo.UserRepo) *Service {
 	return &Service{repo: rp}
 }
 
-func (s *Service) CreateUser(name, email, password, picUrl string) error {
-	passHash, err := hashPassword(password)
+func (s *Service) CreateUser(ctx context.Context, data CreateUserData) (uuid.UUID, error) {
+	passHash, err := hashPassword(data.Password)
 	if err != nil {
-		return errors.Join(ErrOnPassword, err)
+		return uuid.Nil, errors.Join(ErrOnPassword, err)
 	}
 
-	err = s.repo.CreateUser(repo.CreateUserData{
-		Name:          name,
-		Email:         email,
+	id, err := s.repo.CreateUser(ctx, repo.CreateUserData{
+		Name:          data.Name,
+		Email:         data.Email,
 		Password:      passHash,
-		ProfilePicUrl: picUrl,
+		ProfilePicUrl: data.ProfilePicUrl,
 	})
 
 	if errors.Is(err, repo.ErrUserAlreadyExists) {
-		return ErrUserAlreadyExists
+		return uuid.Nil, ErrUserAlreadyExists
 	}
-	return err
+	return id, err
 }
 
 func hashPassword(password string) (string, error) {
@@ -52,13 +54,8 @@ func hashPassword(password string) (string, error) {
 	return string(hashedBytes), nil
 }
 
-func (s *Service) GetUser(email, password string) (User, error) {
-	passHash, err := hashPassword(password)
-	if err != nil {
-		return User{}, errors.Join(ErrOnPassword, err)
-	}
-
-	user, err := s.repo.GetUser(email, passHash)
+func (s *Service) GetUser(ctx context.Context, email string) (User, error) {
+	user, err := s.repo.GetUser(ctx, email)
 	if err != nil {
 		if errors.Is(err, repo.ErrUserNotFound) {
 			return User{}, ErrUserNotFound
