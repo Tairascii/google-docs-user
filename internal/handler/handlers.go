@@ -26,6 +26,11 @@ func NewHandler(DI *app.DI) *Handler {
 
 func (h *Handler) InitHandlers() *chi.Mux {
 	r := chi.NewRouter()
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+	}))
 	r.Route("/api", func(api chi.Router) {
 		api.Route("/v1", func(v1 chi.Router) {
 			v1.Mount("/user", handlers(h))
@@ -36,11 +41,6 @@ func (h *Handler) InitHandlers() *chi.Mux {
 
 func handlers(h *Handler) http.Handler {
 	rg := chi.NewRouter()
-	rg.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-	}))
 	rg.Group(func(r chi.Router) {
 		r.Post("/sign-in", h.SignIn)
 		r.Post("/sign-up", h.SignUp)
