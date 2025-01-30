@@ -7,6 +7,7 @@ import (
 	"github.com/Tairascii/google-docs-user/internal/usecase"
 	"github.com/Tairascii/google-docs-user/pkg"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"net/http"
 )
 
@@ -35,6 +36,11 @@ func (h *Handler) InitHandlers() *chi.Mux {
 
 func handlers(h *Handler) http.Handler {
 	rg := chi.NewRouter()
+	rg.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+	}))
 	rg.Group(func(r chi.Router) {
 		r.Post("/sign-in", h.SignIn)
 		r.Post("/sign-up", h.SignUp)
