@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	app "github.com/Tairascii/google-docs-user/internal"
-	"github.com/Tairascii/google-docs-user/internal/usecase"
+	"github.com/Tairascii/google-docs-user/internal/app"
+	usecase2 "github.com/Tairascii/google-docs-user/internal/app/usecase"
 	"github.com/Tairascii/google-docs-user/pkg"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -61,7 +61,7 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tokens, err := h.DI.UseCase.Auth.SignIn(ctx, payload.Email, payload.Password)
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
+		if errors.Is(err, usecase2.ErrUserNotFound) {
 			pkg.JSONErrorResponseWriter(w, ErrBadCredentials, http.StatusUnauthorized)
 			return
 		}
@@ -81,14 +81,14 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	ctx := r.Context()
-	tokens, err := h.DI.UseCase.Auth.SignUp(ctx, usecase.SignUpData{
+	tokens, err := h.DI.UseCase.Auth.SignUp(ctx, usecase2.SignUpData{
 		Name:          payload.Name,
 		Email:         payload.Email,
 		Password:      payload.Password,
 		ProfilePicUrl: payload.ProfilePicUrl,
 	})
 	if err != nil {
-		if errors.Is(err, usecase.ErrUserAlreadyExists) {
+		if errors.Is(err, usecase2.ErrUserAlreadyExists) {
 			pkg.JSONErrorResponseWriter(w, ErrUserAlreadyExists, http.StatusBadRequest)
 			return
 		}

@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 	"errors"
-	"github.com/Tairascii/google-docs-user/internal/service/user/repo"
+	repo2 "github.com/Tairascii/google-docs-user/internal/app/service/user/repo"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,10 +20,10 @@ type UserService interface {
 }
 
 type Service struct {
-	repo repo.UserRepo
+	repo repo2.UserRepo
 }
 
-func New(rp repo.UserRepo) *Service {
+func New(rp repo2.UserRepo) *Service {
 	return &Service{repo: rp}
 }
 
@@ -33,14 +33,14 @@ func (s *Service) CreateUser(ctx context.Context, data CreateUserData) (uuid.UUI
 		return uuid.Nil, errors.Join(ErrOnPassword, err)
 	}
 
-	id, err := s.repo.CreateUser(ctx, repo.CreateUserData{
+	id, err := s.repo.CreateUser(ctx, repo2.CreateUserData{
 		Name:          data.Name,
 		Email:         data.Email,
 		Password:      passHash,
 		ProfilePicUrl: data.ProfilePicUrl,
 	})
 
-	if errors.Is(err, repo.ErrUserAlreadyExists) {
+	if errors.Is(err, repo2.ErrUserAlreadyExists) {
 		return uuid.Nil, ErrUserAlreadyExists
 	}
 	return id, err
@@ -57,7 +57,7 @@ func hashPassword(password string) (string, error) {
 func (s *Service) GetUser(ctx context.Context, email string) (User, error) {
 	user, err := s.repo.GetUser(ctx, email)
 	if err != nil {
-		if errors.Is(err, repo.ErrUserNotFound) {
+		if errors.Is(err, repo2.ErrUserNotFound) {
 			return User{}, ErrUserNotFound
 		}
 		return User{}, err

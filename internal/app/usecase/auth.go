@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/Tairascii/google-docs-user/internal/service/user"
+	user2 "github.com/Tairascii/google-docs-user/internal/app/service/user"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -25,10 +25,10 @@ type AuthUseCase interface {
 }
 
 type UseCase struct {
-	users user.UserService
+	users user2.UserService
 }
 
-func NewAuthUseCase(users user.UserService) AuthUseCase {
+func NewAuthUseCase(users user2.UserService) AuthUseCase {
 	return &UseCase{users: users}
 }
 
@@ -48,7 +48,7 @@ func checkPassword(password, passwordHash string) error {
 func (u *UseCase) SignIn(ctx context.Context, email, password string) (Tokens, error) {
 	usr, err := u.users.GetUser(ctx, email)
 	if err != nil {
-		if errors.Is(err, user.ErrUserNotFound) {
+		if errors.Is(err, user2.ErrUserNotFound) {
 			return Tokens{}, ErrUserNotFound
 		}
 		return Tokens{}, err
@@ -67,9 +67,9 @@ func (u *UseCase) SignIn(ctx context.Context, email, password string) (Tokens, e
 }
 
 func (u *UseCase) SignUp(ctx context.Context, data SignUpData) (Tokens, error) {
-	id, err := u.users.CreateUser(ctx, user.CreateUserData(data))
+	id, err := u.users.CreateUser(ctx, user2.CreateUserData(data))
 	if err != nil {
-		if errors.Is(err, user.ErrUserAlreadyExists) {
+		if errors.Is(err, user2.ErrUserAlreadyExists) {
 			return Tokens{}, ErrUserAlreadyExists
 		}
 		return Tokens{}, err

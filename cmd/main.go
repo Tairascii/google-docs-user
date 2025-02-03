@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	app "github.com/Tairascii/google-docs-user/internal"
+	"github.com/Tairascii/google-docs-user/internal/app"
+	"github.com/Tairascii/google-docs-user/internal/app/handler"
+	"github.com/Tairascii/google-docs-user/internal/app/service/user"
+	"github.com/Tairascii/google-docs-user/internal/app/service/user/repo"
+	"github.com/Tairascii/google-docs-user/internal/app/usecase"
 	"github.com/Tairascii/google-docs-user/internal/db"
-	"github.com/Tairascii/google-docs-user/internal/handler"
-	"github.com/Tairascii/google-docs-user/internal/service/user"
-	"github.com/Tairascii/google-docs-user/internal/service/user/repo"
-	"github.com/Tairascii/google-docs-user/internal/usecase"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
