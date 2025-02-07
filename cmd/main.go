@@ -47,10 +47,12 @@ func main() {
 	userSrv := user.New(userRepo)
 
 	authUC := usecase.NewAuthUseCase(userSrv)
+	userUC := usecase.NewUserUseCase(userSrv)
 
-	useCase := app.UseCase{Auth: authUC}
+	useCase := app.UseCase{Auth: authUC, User: userUC}
 	DI := &app.DI{UseCase: useCase}
 	handlers := handler.NewHandler(DI)
+	//grpc := grpcHandlers.NewGrpc(DI)
 
 	srv := &http.Server{
 		Addr:         ":8000", // TODO add .env

@@ -6,6 +6,7 @@ import (
 
 type UseCase struct {
 	Auth usecase.AuthUseCase
+	User usecase.UserUseCase
 }
 
 type DI struct {

@@ -1,5 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
+github.com/Tairascii/google-docs-protos v0.0.0-20250207175537-e871d523cfb4 h1:oHvIHe+RNdHoqrc9wUTi8BKoXbCKDW0Agexg0HtN3ys=
+github.com/Tairascii/google-docs-protos v0.0.0-20250207175537-e871d523cfb4/go.mod h1:F+Smht3wDWV4vJH6JMZDn3o6FxewHTKTDPhgyQMLqdA=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
