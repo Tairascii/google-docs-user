@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/Tairascii/google-docs-user/internal/app"
+	grpcServer "github.com/Tairascii/google-docs-user/internal/app/grpc"
 	"github.com/Tairascii/google-docs-user/internal/app/handler"
 	"github.com/Tairascii/google-docs-user/internal/app/service/user"
 	"github.com/Tairascii/google-docs-user/internal/app/service/user/repo"
@@ -52,7 +53,10 @@ func main() {
 	useCase := app.UseCase{Auth: authUC, User: userUC}
 	DI := &app.DI{UseCase: useCase}
 	handlers := handler.NewHandler(DI)
-	//grpc := grpcHandlers.NewGrpc(DI)
+	grpcSrv, err := grpcServer.NewGrpcServer("50051", DI)
+	if err != nil {
+		log.Fatalf("failed to start grpc server: %v", err)
+	}
 
 	srv := &http.Server{
 		Addr:         ":8000", // TODO add .env
@@ -61,6 +65,12 @@ func main() {
 		IdleTimeout:  15 * time.Second,
 		Handler:      handlers.InitHandlers(),
 	}
+
+	go func() {
+		if err := grpcSrv.Start(); err != nil {
+			log.Fatalf("failed to start grpc server: %v", err)
+		}
+	}()
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
