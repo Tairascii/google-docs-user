@@ -8,7 +8,7 @@ import (
 )
 
 type UserUseCase interface {
-	UserById(ctx context.Context) (user.User, error)
+	UserById(ctx context.Context) (User, error)
 	IdByEmail(ctx context.Context, email string) (uuid.UUID, error)
 }
 

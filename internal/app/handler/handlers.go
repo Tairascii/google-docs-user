@@ -123,4 +123,5 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pkg.JSONResponseWriter[User](w, User(usr), http.StatusOK)
 }
