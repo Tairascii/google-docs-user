@@ -16,7 +16,8 @@ var (
 
 type UserRepo interface {
 	CreateUser(ctx context.Context, userData CreateUserData) (uuid.UUID, error)
-	GetUser(ctx context.Context, email string) (User, error)
+	UserByEmail(ctx context.Context, email string) (User, error)
+	UserByID(ctx context.Context, id uuid.UUID) (User, error)
 }
 
 type Repo struct {
@@ -50,10 +51,20 @@ func (r *Repo) CreateUser(ctx context.Context, userData CreateUserData) (uuid.UU
 	return id, nil
 }
 
-func (r *Repo) GetUser(ctx context.Context, email string) (User, error) {
+func (r *Repo) UserByEmail(ctx context.Context, email string) (User, error) {
 	var user User
 	q := `SELECT id, name, email, profile_picture_url, created_at, password_hash FROM users WHERE email = $1;`
 	err := r.db.GetContext(ctx, &user, q, email)
+	if err != nil {
+		return User{}, errors.Join(ErrUserNotFound, err)
+	}
+	return user, nil
+}
+
+func (r *Repo) UserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	var user User
+	q := `SELECT id, name, email, profile_picture_url, created_at, password_hash FROM users WHERE id = $1;`
+	err := r.db.GetContext(ctx, &user, q, id)
 	if err != nil {
 		return User{}, errors.Join(ErrUserNotFound, err)
 	}

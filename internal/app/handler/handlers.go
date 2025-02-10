@@ -14,6 +14,12 @@ import (
 var (
 	ErrBadCredentials    = errors.New("bad credentials")
 	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrAuth              = errors.New("authentication failed")
+)
+
+// TODO move to apigw and use vault
+const (
+	accessSecret = "yoS0baK1Ya"
 )
 
 type Handler struct {
@@ -33,19 +39,29 @@ func (h *Handler) InitHandlers() *chi.Mux {
 	}))
 	r.Route("/api", func(api chi.Router) {
 		api.Route("/v1", func(v1 chi.Router) {
-			v1.Mount("/user", handlers(h))
+			v1.Mount("/auth", authHandlers(h))
+			v1.Mount("/user", userHandlers(h))
 		})
 	})
 	return r
 }
 
-func handlers(h *Handler) http.Handler {
+func authHandlers(h *Handler) http.Handler {
 	rg := chi.NewRouter()
 	rg.Group(func(r chi.Router) {
 		r.Post("/sign-in", h.SignIn)
 		r.Post("/sign-up", h.SignUp)
 	})
 
+	return rg
+}
+
+func userHandlers(h *Handler) http.Handler {
+	rg := chi.NewRouter()
+	rg.Use(ParseToken(accessSecret))
+	rg.Group(func(r chi.Router) {
+		r.Get("", h.GetUser)
+	})
 	return rg
 }
 
@@ -97,4 +113,14 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pkg.JSONResponseWriter[Tokens](w, toTokens(tokens), http.StatusOK)
+}
+
+func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	usr, err := h.DI.UseCase.User.UserById(ctx)
+	if err != nil {
+		pkg.JSONErrorResponseWriter(w, err, http.StatusInternalServerError)
+		return
+	}
+
 }

@@ -46,7 +46,7 @@ func checkPassword(password, passwordHash string) error {
 }
 
 func (u *AuthUC) SignIn(ctx context.Context, email, password string) (Tokens, error) {
-	usr, err := u.users.GetUser(ctx, email)
+	usr, err := u.users.UserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return Tokens{}, ErrUserNotFound

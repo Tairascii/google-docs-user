@@ -8,6 +8,7 @@ import (
 )
 
 type UserUseCase interface {
+	UserById(ctx context.Context) (user.User, error)
 	IdByEmail(ctx context.Context, email string) (uuid.UUID, error)
 }
 
@@ -20,7 +21,7 @@ func NewUserUseCase(usr user.UserService) *UserUC {
 }
 
 func (u *UserUC) IdByEmail(ctx context.Context, email string) (uuid.UUID, error) {
-	usr, err := u.user.GetUser(ctx, email)
+	usr, err := u.user.UserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return uuid.Nil, ErrUserNotFound
@@ -28,4 +29,12 @@ func (u *UserUC) IdByEmail(ctx context.Context, email string) (uuid.UUID, error)
 		return uuid.Nil, err
 	}
 	return usr.ID, nil
+}
+
+func (u *UserUC) UserById(ctx context.Context) (User, error) {
+	usr, err := u.user.UserByID(ctx)
+	if err != nil {
+		return User{}, err
+	}
+	return User(usr), nil
 }
