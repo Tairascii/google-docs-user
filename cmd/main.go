@@ -2,6 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/Tairascii/google-docs-user/internal/app"
 	grpcServer "github.com/Tairascii/google-docs-user/internal/app/grpc"
 	"github.com/Tairascii/google-docs-user/internal/app/handler"
@@ -10,26 +18,25 @@ import (
 	"github.com/Tairascii/google-docs-user/internal/app/usecase"
 	"github.com/Tairascii/google-docs-user/internal/db"
 	"github.com/jmoiron/sqlx"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
+// TODO move to app
 func main() {
-	//TODO add envs
+	cfg, err := app.LoadConfigs()
+	if err != nil {
+		panic(err)
+	}
+
 	dbSettings := db.Settings{
-		Host:          "localhost",
-		Port:          "5432",
-		User:          "admin",
-		Password:      "12345",
-		DbName:        "google_doc_users",
-		Schema:        "google_doc_users_schema",
-		AppName:       "google_doc_users",
-		MaxIdleConns:  2,
-		MaxOpenConns:  5,
+		Host:          cfg.Repo.Host,
+		Port:          cfg.Repo.Port,
+		User:          cfg.Repo.User,
+		Password:      cfg.Repo.Password,
+		DbName:        cfg.Repo.DBName,
+		Schema:        cfg.Repo.Schema,
+		AppName:       cfg.Repo.AppName,
+		MaxIdleConns:  cfg.Repo.MaxIdleConns,
+		MaxOpenConns:  cfg.Repo.MaxOpenConns,
 		MigrateSchema: true,
 	}
 
@@ -53,16 +60,16 @@ func main() {
 	useCase := app.UseCase{Auth: authUC, User: userUC}
 	DI := &app.DI{UseCase: useCase}
 	handlers := handler.NewHandler(DI)
-	grpcSrv, err := grpcServer.NewGrpcServer("50051", DI)
+	grpcSrv, err := grpcServer.NewGrpcServer(cfg.GrpcServer.Port, DI)
 	if err != nil {
 		log.Fatalf("failed to start grpc server: %v", err)
 	}
 
 	srv := &http.Server{
-		Addr:         ":8000", // TODO add .env
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  15 * time.Second,
+		Addr:         fmt.Sprintf(":%s", cfg.Server.Port),
+		ReadTimeout:  cfg.Server.Timeout.Read,
+		WriteTimeout: cfg.Server.Timeout.Write,
+		IdleTimeout:  cfg.Server.Timeout.Idle,
 		Handler:      handlers.InitHandlers(),
 	}
 
@@ -73,20 +80,20 @@ func main() {
 	}()
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Fatalf("Something went wrong while runing server %s", err.Error())
+		if err := srv.ListenAndServe(); errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("something went wrong while runing server %s", err.Error())
 		}
 	}()
 
-	log.Println("Listening on port 8080")
+	log.Printf("listening on port: %s", cfg.Server.Port)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
 	<-quit
 
-	log.Println("Shutting down server")
+	log.Println("shutting down server")
 
 	if err := srv.Shutdown(context.Background()); err != nil {
-		log.Fatalf("Something went wrong while shutting down server %s", err.Error())
+		log.Fatalf("something went wrong while shutting down server %s", err.Error())
 	}
 }
